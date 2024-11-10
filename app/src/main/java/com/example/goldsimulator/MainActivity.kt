@@ -7,8 +7,6 @@ import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 
-
-
 class MainActivity : ComponentActivity() {
     private val viewModel: GoldClickerViewModel by viewModels()
 
@@ -17,7 +15,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface {
-                    GoldClickerGame(viewModel) // Pass the ViewModel instance here
+                    GoldClickerGame(viewModel)
                 }
             }
         }

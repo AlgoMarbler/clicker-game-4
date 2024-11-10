@@ -1,85 +1,121 @@
 package com.example.goldsimulator
 
+import GoldClickerViewState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class GoldClickerViewModel : ViewModel() {
-    var gold by mutableStateOf(0L)
-        private set
-    var goldPerClick by mutableStateOf(1L)
-        private set
-    var upgradeCost by mutableStateOf(50L)
-        private set
-    var autoClickerCost by mutableStateOf(100L)
-        private set
-    var prestigeBonus by mutableStateOf(1L)
-        private set
-    var autoClickerEnabled by mutableStateOf(false)
-        private set
-    val achievements = mutableStateListOf<String>()
+    var viewState by mutableStateOf(
+        GoldClickerViewState(
+            gold = 0,
+            goldInformation = GoldClickerViewState.GoldValues(
+                goldPerClick = 1,
+                upgradeCost = 10,
+                autoClickerCost = 100,
+                prestigeBonus = 1,
+            ),
+            autoClickerEnabled = false,
+            achievements = listOf(),
+            autoClickerCost = 100,
+            goldPerClick = 1,
+            prestigeBonus = 1,
+            upgradeCost = 50,
+        )
+    )
 
     init {
         startAutoClicker()
     }
 
     fun onGoldClick() {
-        gold += goldPerClick * prestigeBonus
+        viewState = viewState.copy(
+            gold = viewState.gold + viewState.goldInformation.goldPerClick * viewState.goldInformation.prestigeBonus
+        )
         checkAchievements()
     }
 
     fun upgradeGoldPerClick() {
-        if (gold >= upgradeCost) {
-            gold -= upgradeCost
-            goldPerClick += 1
-            upgradeCost = (upgradeCost * 1.5).toLong()
-            checkAchievements()
+        if (viewState.gold >= viewState.goldInformation.upgradeCost) {
+
+            if(viewState.upgradeCost < 85){
+                viewState = viewState.copy(
+                    gold = viewState.gold - viewState.goldInformation.upgradeCost,
+                    goldInformation = viewState.goldInformation.copy(
+                        goldPerClick = viewState.goldInformation.goldPerClick + 1,
+                        upgradeCost = viewState.goldInformation.upgradeCost * 4 - 15,
+                    )
+                )
+                checkAchievements()
+            }else{
+                viewState = viewState.copy(
+                    gold = viewState.gold - viewState.goldInformation.upgradeCost,
+                    goldInformation = viewState.goldInformation.copy(
+                        goldPerClick = viewState.goldInformation.goldPerClick + 1,
+                        upgradeCost = viewState.goldInformation.upgradeCost * 3 - 120,
+                    )
+                )
+            }
+
         }
     }
 
     fun activateAutoClicker() {
-        if (!autoClickerEnabled && gold >= autoClickerCost) {
-            gold -= autoClickerCost
-            autoClickerEnabled = true
-            autoClickerCost = (autoClickerCost * 2).toLong()
+        if (!viewState.autoClickerEnabled && viewState.gold >= viewState.goldInformation.autoClickerCost) {
+            viewState = viewState.copy(
+                gold = viewState.gold - viewState.goldInformation.autoClickerCost,
+                autoClickerEnabled = true,
+                goldInformation = viewState.goldInformation.copy(
+                    autoClickerCost = viewState.goldInformation.autoClickerCost * 250000
+                )
+            )
             checkAchievements()
         }
     }
 
     fun prestige() {
-        if (gold >= 10000) {
-            gold = 0
-            goldPerClick = 1
-            upgradeCost = 50
-            prestigeBonus += 1
-            autoClickerEnabled = false
-            autoClickerCost = 100
-            achievements.clear()
+        if (viewState.gold >= 10000) {
+            viewState = GoldClickerViewState(
+                gold = 0,
+                goldInformation = GoldClickerViewState.GoldValues(
+                    goldPerClick = 1,
+                    upgradeCost = 10,
+                    autoClickerCost = 100,
+                    prestigeBonus = 1,
+                ),
+                autoClickerEnabled = false,
+                achievements = listOf(),
+                autoClickerCost = 100,
+                goldPerClick = 1,
+                prestigeBonus = 1,
+                upgradeCost = 50,
+            )
         }
     }
 
     private fun startAutoClicker() {
         viewModelScope.launch {
             while (true) {
-                if (autoClickerEnabled) {
-                    gold += goldPerClick
+                if (viewState.autoClickerEnabled) {
+                    viewState = viewState.copy(gold = viewState.gold + viewState.goldInformation.goldPerClick)
                 }
-                delay(1000)
+                delay(300)
             }
         }
     }
 
     private fun checkAchievements() {
         val newAchievements = mutableListOf<String>()
-        if (gold >= 1000) newAchievements.add("Gold Hoarder: 1000 Gold!")
-        if (goldPerClick >= 10) newAchievements.add("Power Clicker: 10 Gold per Click!")
-        if (autoClickerEnabled) newAchievements.add("Auto-clicker Activated!")
-        achievements.clear()
-        achievements.addAll(newAchievements.distinct())
+        if (viewState.gold >= 1) newAchievements.add("The beginning (Have 1 gold)")
+        if (viewState.gold >= 100) newAchievements.add("Tiny steps (Have 100 gold)")
+        if (viewState.gold >= 5000) newAchievements.add("Enrichment (Have 5000 gold)")
+        if (viewState.gold >= 200000) newAchievements.add("Infinite gold glitch? (Have 200K gold)")
+        if (viewState.gold >= 10000000) newAchievements.add("It's time to stop playing. (Have 10M gold)")
+
+        viewState = viewState.copy(achievements = newAchievements.distinct())
     }
 }
